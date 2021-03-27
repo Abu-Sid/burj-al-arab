@@ -12,22 +12,15 @@ const Login = () => {
     const location=useLocation()
     const {from} = location.state || {from:{pathname:'/'}}
 
+    if(!firebase.apps.length){firebase.initializeApp(firebaseConfig)}
     const handleGoogle=()=> {
-        firebase.initializeApp(firebaseConfig);
         const provider = new firebase.auth.GoogleAuthProvider();
-        firebase.auth()
-  .signInWithPopup(provider)
-  .then((result) => {
-    /** @type {firebase.auth.OAuthCredential} */
-    var credential = result.credential;
- 
-    // This gives you a Google Access Token. You can use it to access the Google API.
-    var token = credential.accessToken;
-    // The signed-in user info.
-    const {displayName,email} = result.user;
-    const signedUser={name:displayName,email}
-    setLoggedUser(signedUser)
-    history.replace(from)
+        firebase.auth().signInWithPopup(provider).then((result) => {
+    const { displayName, email } = result.user;
+    const signedUser = { name: displayName, email };
+    setLoggedUser(signedUser);
+    storeAuthToken()
+    
     // ...
   }).catch((error) => {
     // Handle Errors here.
@@ -36,6 +29,16 @@ const Login = () => {
     console.log(errorCode,errorMessage);
     
   });
+    }
+    const storeAuthToken=()=>{
+      firebase.auth().currentUser.getIdToken(/* forceRefresh */ true).then(function(idToken) {
+        
+        // Send token to your backend via HTTPS
+        sessionStorage.setItem('token',idToken);
+        history.replace(from);
+      }).catch(function(error) {
+        // Handle error
+      });
     }
     return (
         <div>
